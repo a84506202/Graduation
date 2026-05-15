@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>後台管理｜翻轉氣球樂學所</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --rose:#1d6ae1;--pink:#72b4f4;--pink2:#cfe4fb;--pink3:#e7f2fc;--pink4:#f2f8fd;
+  --ink:#081a26;--gray:#6b7280;--border:#e1edf8;
+  --green:#16a34a;--gbg:#f0fdf4;--gb:#bbf7d0;
+  --yellow:#d97706;--ybg:#fffbeb;
+  --blue:#2563eb;--bbg:#eff6ff;
+  --purple:#7c3aed;--pbg:#f5f3ff;
+  --red:#dc2626;--rbg:#fff1f2;--rbl:#fecdd3;
+  --amber:#d97706;--abg:#fef3c7;
+}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:#f1eaf0;color:var(--ink);font-family:'Noto Sans TC',sans-serif;font-size:14px;line-height:1.6}
+
+/* LOGIN */
+#login-wrap{display:flex;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#f2f8fd,#e7f2fc);align-items:center;justify-content:center;padding:20px;transition:opacity .3s}
+#login-wrap.gone{opacity:0;pointer-events:none}
+.lbox{background:#fff;border-radius:22px;padding:38px 28px;width:100%;max-width:340px;box-shadow:0 12px 48px rgba(114,180,244,.18);border:1.5px solid var(--pink2);text-align:center}
+.licon{font-size:3.2rem;margin-bottom:10px}
+.ltitle{font-family:'Zen Maru Gothic',sans-serif;font-size:1.35rem;font-weight:700;color:var(--rose);margin-bottom:3px}
+.lsub{font-size:.76rem;color:var(--gray);margin-bottom:24px}
+.lpw{width:100%;padding:12px 15px;border:1.5px solid var(--border);border-radius:11px;font-family:inherit;font-size:.95rem;color:var(--ink);outline:none;transition:border-color .2s;margin-bottom:8px}
+.lpw:focus{border-color:var(--pink)}
+.lpw.err{border-color:var(--rose);background:var(--rbg)}
+.lerr{color:var(--rose);font-size:.76rem;margin-bottom:8px;min-height:16px}
+.lbtn{width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),var(--pink));border:none;border-radius:11px;color:#fff;font-family:inherit;font-size:.93rem;font-weight:700;cursor:pointer;transition:all .2s}
+.lbtn:hover{transform:translateY(-1px)}
+.lhint{font-size:.67rem;color:#d1d5db;margin-top:12px}
+
+/* APP */
+#app{display:none;height:100vh;flex-direction:column}
+#app.show{display:flex}
+
+.adm-strip{background:linear-gradient(135deg,var(--rose),#185db4);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.adm-brand{color:#fff;font-family:'Zen Maru Gothic',sans-serif;font-size:.92rem;font-weight:700}
+.adm-brand small{font-size:.66rem;opacity:.75;font-weight:400;margin-left:6px}
+.hbtns{display:flex;gap:6px;align-items:center}
+.hb{padding:6px 11px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:.71rem;font-weight:700;transition:all .18s}
+.hb.w{background:rgba(255,255,255,.2);color:#fff}.hb.w:hover{background:rgba(255,255,255,.32)}
+.hb.s{background:#fff;color:var(--rose)}.hb.s:hover{background:var(--pink3)}
+.sync-dot{font-size:.62rem;padding:2px 8px;border-radius:20px;background:rgba(22,163,74,.3);color:#86efac;font-weight:700}
+
+.tab-bar{display:flex;background:linear-gradient(135deg,var(--rose),#185db4);flex-shrink:0;padding:0 12px}
+.tab-btn{flex:1;padding:12px 4px;border:none;background:none;color:rgba(255,255,255,.6);font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;transition:all .2s;border-bottom:3px solid transparent}
+.tab-btn.active{color:#fff;border-bottom-color:#fff}
+
+.page{display:none;flex:1;overflow-y:auto;flex-direction:column}
+.page.active{display:flex}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;padding:10px 10px 0;flex-shrink:0}
+.stat{background:#fff;border-radius:11px;padding:9px 5px;border:1.5px solid var(--border);text-align:center}
+.sn{font-family:'Zen Maru Gothic',sans-serif;font-size:1.2rem;font-weight:700}
+.sl{font-size:.58rem;color:var(--gray);margin-top:1px}
+
+/* FILTER */
+.filter-bar{display:flex;gap:7px;padding:9px 10px;flex-shrink:0;flex-wrap:wrap;align-items:center}
+.filter-bar input,.filter-bar select{padding:8px 10px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.78rem;color:var(--ink);background:#fff;outline:none}
+.filter-bar input{flex:1;min-width:120px}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--pink)}
+.btn-export{padding:8px 12px;background:var(--gbg);border:1.5px solid var(--gb);border-radius:9px;color:var(--green);font-family:inherit;font-size:.74rem;font-weight:700;cursor:pointer;white-space:nowrap}
+
+/* ORDER CARDS */
+.orders-list{flex:1;overflow-y:auto;padding:0 10px 10px}
+.order-card{background:#fff;border-radius:12px;border:1.5px solid var(--border);padding:12px 14px;margin-bottom:7px;cursor:pointer;transition:all .15s}
+.order-card:hover{border-color:var(--pink)}
+.order-card.sel{border-color:var(--rose)}
+.oc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.oc-name{font-weight:700;font-size:.9rem}
+.oc-phone{font-size:.7rem;color:var(--gray);margin-left:4px}
+.oc-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:3px}
+.oc-pickup{font-size:.7rem;color:var(--gray)}
+.oc-price{font-weight:700;color:var(--rose);font-size:.86rem}
+.oc-tags{font-size:.69rem;color:var(--pink);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oc-id{font-size:.64rem;color:#d1d5db;margin-top:1px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.66rem;font-weight:700;white-space:nowrap}
+.empty-state{text-align:center;padding:50px 20px;color:var(--gray)}
+.empty-state div{font-size:3rem;margin-bottom:10px}
+
+/* EDITOR WRAP */
+.editor-wrap{flex:1;overflow-y:auto;padding:10px}
+.editor-section{background:#fff;border-radius:14px;border:1.5px solid var(--border);padding:16px;margin-bottom:10px}
+.editor-title{font-family:'Zen Maru Gothic',sans-serif;font-size:.88rem;font-weight:700;color:var(--ink);margin-bottom:12px;padding-bottom:9px;border-bottom:1.5px dashed var(--pink2);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ef{margin-bottom:11px}
+.ef label{display:block;font-size:.71rem;font-weight:700;color:#374151;margin-bottom:4px}
+.ef input,.ef textarea,.ef select{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.84rem;color:var(--ink);outline:none;transition:border-color .2s;background:#fff}
+.ef input:focus,.ef textarea:focus,.ef select:focus{border-color:var(--pink)}
+.ef textarea{resize:vertical;min-height:60px}
+.ef .hint{font-size:.67rem;color:var(--gray);margin-top:3px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* IMAGE DROP ZONE */
+.img-drop-zone{width:100%;border:2.5px dashed var(--pink2);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:var(--pink4);cursor:pointer;transition:all .2s;position:relative;overflow:hidden;margin-top:6px;min-height:80px}
+.img-drop-zone:hover,.img-drop-zone.drag-over{border-color:var(--rose);background:var(--pink3)}
+.img-drop-zone img.preview-img{width:100%;height:100%;object-fit:contain;object-position:center;display:block;border-radius:10px;background:#f5f0eb}
+.dz-icon{font-size:1.6rem;position:relative;z-index:1}
+.dz-text{font-size:.71rem;font-weight:700;color:var(--rose);text-align:center;position:relative;z-index:1}
+.dz-sub{font-size:.62rem;color:#b06080;text-align:center;position:relative;z-index:1;padding:0 8px}
+.img-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
+.img-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(29,106,225,.7);color:#fff;font-size:.67rem;font-weight:700;text-align:center;padding:4px;z-index:3;border-radius:0 0 10px 10px}
+
+/* IMAGE SIZE SLIDER */
+.img-size-ctrl{display:flex;align-items:center;gap:8px;margin-top:8px}
+.img-size-ctrl label{font-size:.7rem;color:var(--gray);font-weight:700;white-space:nowrap}
+.img-size-ctrl input[type=range]{flex:1;accent-color:var(--rose)}
+.img-size-ctrl span{font-size:.7rem;color:var(--rose);font-weight:700;min-width:36px}
+
+/* PRODUCT LIST */
+.prod-list{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.prod-item{background:#fff;border-radius:11px;border:1.5px solid var(--border);padding:11px;display:flex;align-items:center;gap:9px;cursor:pointer;transition:all .15s}
+.prod-item:hover{border-color:var(--pink)}
+.prod-item.active-edit{border-color:var(--rose);background:var(--pink4)}
+.prod-thumb{border-radius:8px;background:#f5f0eb;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem;overflow:hidden}
+.prod-thumb img{width:100%;height:100%;object-fit:contain;object-position:center;display:block;background:#f5f0eb}
+.prod-info{flex:1;min-width:0}
+.pn{font-weight:700;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps{font-size:.68rem;color:var(--gray)}
+.toggle-sw{width:34px;height:19px;background:#d1d5db;border-radius:20px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle-sw.on{background:var(--green)}
+.toggle-sw::after{content:'';position:absolute;width:15px;height:15px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s}
+.toggle-sw.on::after{left:17px}
+
+.prod-edit-form{background:var(--pink4);border-radius:11px;padding:13px;margin-top:7px;border:1.5px solid var(--pink2)}
+.prod-edit-title{font-size:.77rem;font-weight:700;color:var(--rose);margin-bottom:9px}
+
+/* ── OPTIONS EDITOR ── */
+.opt-editor{background:var(--pink4);border-radius:12px;border:1.5px solid var(--pink2);padding:14px;margin-bottom:10px}
+.opt-editor-title{font-size:.8rem;font-weight:700;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.opt-item-row{background:#fff;border-radius:9px;border:1.5px solid var(--border);padding:11px 12px;margin-bottom:7px}
+.opt-item-row .oir-head{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.opt-item-row .oir-label{font-size:.75rem;font-weight:700;color:var(--rose)}
+.oir-del{background:var(--rbg);border:1px solid var(--rbl);color:var(--red);border-radius:6px;padding:3px 8px;font-size:.65rem;font-weight:700;cursor:pointer;font-family:inherit;margin-left:auto}
+.opt-field{margin-bottom:8px}
+.opt-field label{font-size:.68rem;font-weight:700;color:#374151;display:block;margin-bottom:3px}
+.opt-field input{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.82rem;color:var(--ink);outline:none;background:#fff}
+.opt-field input:focus{border-color:var(--pink)}
+.opt-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checkbox-row{display:flex;align-items:center;gap:6px;font-size:.74rem;color:#374151;margin-top:4px}
+.checkbox-row input[type=checkbox]{accent-color:var(--rose);width:15px;height:15px;cursor:pointer}
+
+/* Style pills editor */
+.styles-editor{margin-top:8px}
+.styles-editor label{font-size:.68rem;font-weight:700;color:#374151;display:block;margin-bottom:5px}
+.styles-pills-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px}
+.style-pill-edit{display:flex;align-items:center;gap:3px;background:var(--pink3);border:1px solid var(--pink2);border-radius:20px;padding:3px 4px 3px 10px;font-size:.76rem}
+.style-pill-edit span{color:var(--rose);font-weight:700}
+.style-pill-del{background:none;border:none;color:var(--gray);cursor:pointer;font-size:.85rem;padding:0 2px;line-height:1;flex-shrink:0}
+.style-pill-del:hover{color:var(--red)}
+.add-style-row{display:flex;gap:6px}
+.add-style-input{flex:1;padding:6px 10px;border:1.5px solid var(--pink2);border-radius:8px;font-family:inherit;font-size:.8rem;outline:none;background:#fff}
+.add-style-input:focus{border-color:var(--pink)}
+.add-style-btn{padding:6px 11px;background:var(--pink3);border:1.5px solid var(--pink2);border-radius:8px;color:var(--rose);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
+
+.btn-add-opt{width:100%;padding:9px;background:var(--pink3);border:1.5px dashed var(--pink);border-radius:9px;color:var(--rose);font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-add-opt:hover{background:var(--pink2)}
+
+/* SAVE STRIP */
+.save-strip{position:sticky;bottom:0;padding:10px 0;background:linear-gradient(to top,#f1eaf0,transparent)}
+.btn-save{width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),var(--pink));border:none;border-radius:12px;color:#fff;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(29,106,225,.25);transition:all .2s}
+.btn-save:hover{transform:translateY(-1px)}
+.btn-sm{padding:5px 10px;border-radius:7px;border:none;cursor:pointer;font-family:inherit;font-size:.72rem;font-weight:700;transition:all .15s}
+.btn-sm.danger{background:var(--rbg);border:1px solid var(--rbl);color:var(--red)}
+.btn-sm.green{background:var(--gbg);border:1px solid var(--gb);color:var(--green)}
+
+/* DRAWER */
+.drawer-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(26,8,16,.48);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center}
+.drawer-overlay.show{display:flex;animation:fin .2s}
+@keyframes fin{from{opacity:0}to{opacity:1}}
+.drawer{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;animation:su .32s cubic-bezier(.34,1.2,.64,1)}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.dhead{display:flex;justify-content:space-between;align-items:center;padding:15px 17px 12px;border-bottom:1.5px solid var(--border);position:sticky;top:0;background:#fff;z-index:10}
+.dtitle{font-weight:700;font-size:.93rem}
+.dclose{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gray);padding:2px 5px}
+.status-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:11px 15px}
+.sbtn{padding:9px 5px;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;font-family:inherit;font-size:.72rem;font-weight:700;text-align:center;background:#fff;color:var(--gray);transition:all .15s}
+.sbtn:hover{border-color:var(--pink);color:var(--rose)}
+.s-pending{border-color:var(--yellow)!important;background:var(--ybg)!important;color:var(--yellow)!important}
+.s-confirmed{border-color:var(--green)!important;background:var(--gbg)!important;color:var(--green)!important}
+.s-paid{border-color:var(--blue)!important;background:var(--bbg)!important;color:var(--blue)!important}.s-done{border-color:var(--purple)!important;background:var(--pbg)!important;color:var(--purple)!important}
+.s-cancelled{border-color:var(--red)!important;background:var(--rbg)!important;color:var(--red)!important}
+.dbody{padding:2px 15px 20px}
+.drow{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--pink2);font-size:.79rem}
+.drow:last-child{border:none}
+.dlbl{width:70px;flex-shrink:0;color:var(--gray);font-weight:500;font-size:.72rem}
+.dval{flex:1;font-weight:500;color:var(--ink);word-break:break-all;line-height:1.6}
+.dval.big{color:var(--rose);font-size:.95rem;font-weight:700}
+.btn-del{width:100%;margin-top:10px;padding:9px;background:var(--rbg);border:1.5px solid var(--rbl);border-radius:9px;color:var(--red);font-weight:700;font-size:.79rem;cursor:pointer;font-family:inherit}
+
+/* IMAGE ZOOM MODAL */
+.zoom-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.85);align-items:center;justify-content:center}
+.zoom-overlay.show{display:flex;animation:fin .2s}
+.zoom-overlay img{max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain}
+.zoom-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:1.4rem;cursor:pointer;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#081a26;color:#fff;padding:10px 22px;border-radius:30px;font-size:.79rem;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+/* ════ Firebase 後台 ════ */
+var fbDb = null;
+
+function fbWatchOrders(callback) {
+  if (!fbDb) { setTimeout(function(){ fbWatchOrders(callback); }, 800); return; }
+  try {
+    fbDb.ref('orders').on('value', function(snap) {
+      var data = snap.val();
+      if (data === null) {
+        /* Firebase 回傳 null：可能是規則過期或資料庫是空的，不呼叫 callback 避免清空 */
+        console.warn('Firebase orders returned null - keeping local data');
+        return;
+      }
+      var list = Object.values(data);
+      list.sort(function(a,b){ return new Date(b.createdAt)-new Date(a.createdAt); });
+      callback(list);
+    });
+  } catch(e) {
+    /* 錯誤時不回傳空陣列，保留現有訂單 */
+    console.warn('fbWatchOrders error:', e);
+  }
+}
+function fbUpdateStatus(id, status) {
+  if (!fbDb) return;
+  try { fbDb.ref('orders/'+id+'/status').set(status); } catch(e) {}
+}
+function fbDeleteOrder(id) {
+  if (!fbDb) return;
+  try { fbDb.ref('orders/'+id).remove(); } catch(e) {}
+}
+function fbSaveSettings(s) {
+  if (!fbDb) return;
+  try { fbDb.ref('settings').set(s); } catch(e) {}
+}
+function fbLoadSettings(cb) {
+  if (!fbDb) { cb({}); return; }
+  try { fbDb.ref('settings').once('value').then(function(s){cb(s.val()||{});}).catch(function(){cb({});}); } catch(e){ cb({}); }
+}
+function fbSaveOptions(o) {
+  if (!fbDb) return;
+  try { fbDb.ref('options').set(o); } catch(e) {}
+}
+function fbLoadOptions(cb) {
+  if (!fbDb) { cb(null); return; }
+  try { fbDb.ref('options').once('value').then(function(s){cb(s.val());}).catch(function(){cb(null);}); } catch(e){ cb(null); }
+}
+
+/* 動態載入 SDK，載入完成後自動啟動監聽 */
+(function() {
+  function loadScript(url, cb) {
+    var s = document.createElement('script');
+    s.src = url; s.onload = cb;
+    s.onerror = function() { cb(); };
+    document.head.appendChild(s);
+  }
+  loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js', function() {
+    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js', function() {
+      try {
+        if (typeof firebase === 'undefined') throw new Error('no firebase');
+        if (!firebase.apps.length) firebase.initializeApp({ databaseURL: "https://ballonshop-ed21c-default-rtdb.asia-southeast1.firebasedatabase.app" });
+        fbDb = firebase.database();
+        console.log('BE Firebase OK');
+        /* Firebase 就緒，啟動即時訂單監聽 */
+        fbWatchOrders(function(list) {
+          /* 安全保護：只有 Firebase 回傳有資料才覆蓋 localStorage */
+          /* 避免 Firebase 連線瞬間回傳空值把訂單清掉 */
+          if (list && list.length > 0) {
+            orders = list;
+            sv(SK.ORDERS, orders);
+          } else if (list && list.length === 0) {
+            /* Firebase 回傳空陣列：可能是真的沒訂單，也可能是連線問題 */
+            /* 保守策略：保留 localStorage 現有訂單，但更新顯示 */
+            var localOrders = ld(SK.ORDERS, []);
+            if (localOrders.length === 0) {
+              /* localStorage 也是空的，才真的清空 */
+              orders = [];
+              sv(SK.ORDERS, orders);
+            }
+            /* 否則保留 localStorage 的訂單不覆蓋 */
+          }
+          if (typeof renderOrders === 'function') { renderOrders(); updateStats(); }
+          var el = document.getElementById('sync-status');
+          if (el) { el.style.background='rgba(234,179,8,.5)'; setTimeout(function(){el.style.background='rgba(22,163,74,.3)';},600); }
+        });
+      } catch(e) { console.warn('BE Firebase init failed:', e.message); }
+    });
+  });
+})();
+/* ════════════════════════════════════════════════ */
+</script>
+</head>
+<body>
+
+<div id="login-wrap">
+  <div class="lbox">
+    <div class="licon">🎈</div>
+    <div class="ltitle">後台管理系統</div>
+    <div class="lsub">翻轉氣球樂學所</div>
+    <input class="lpw" id="pw-input" type="password" placeholder="請輸入管理密碼">
+    <div class="lerr" id="pw-err"></div>
+    <button class="lbtn" onclick="doLogin()">登入</button>
+    <div class="lhint">預設密碼：admin123</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="adm-strip">
+    <div class="adm-brand">🎈 翻轉氣球樂學所 <small>後台管理</small></div>
+    <div class="hbtns">
+      <span class="sync-dot" id="sync-status">● 同步中</span>
+      <button class="hb w" onclick="exportOrders()">📥 匯出</button>
+      <button class="hb s" onclick="doLogout()">登出</button>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('orders',this)">📋 訂單</button>
+    
+    <button class="tab-btn" onclick="switchTab('options',this)">✏️ 選項編輯</button>
+    <button class="tab-btn" onclick="switchTab('settings',this)">⚙️ 設定</button>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="page active" id="page-orders">
+    <div class="stats-grid">
+      <div class="stat"><div class="sn" id="s-all" style="color:var(--ink)">0</div><div class="sl">全部</div></div>
+      <div class="stat"><div class="sn" id="s-pending" style="color:var(--yellow)">0</div><div class="sl">待確認</div></div>
+      <div class="stat"><div class="sn" id="s-confirmed" style="color:var(--green)">0</div><div class="sl">已確認</div></div>
+      <div class="stat"><div class="sn" id="s-paid" style="color:var(--blue)">0</div><div class="sl">已匯款</div></div><div class="stat"><div class="sn" id="s-done" style="color:var(--purple)">0</div><div class="sl">已取貨</div></div>
+      <div class="stat" style="flex-direction:column;align-items:center;gap:3px;cursor:default"><div class="sn" id="s-revenue" style="color:var(--rose);font-size:.85rem">$0</div><div class="sl">金額統計</div><div style="display:flex;gap:4px;margin-top:2px"><button onclick="setRevMode('day')" id="rev-day-btn" style="font-size:.62rem;padding:2px 6px;border-radius:8px;border:1px solid var(--rose);background:var(--rose);color:#fff;cursor:pointer">單日</button><button onclick="setRevMode('month')" id="rev-month-btn" style="font-size:.62rem;padding:2px 6px;border-radius:8px;border:1px solid var(--rose);background:#fff;color:var(--rose);cursor:pointer">單月</button></div><input type="date" id="rev-date-picker" style="font-size:.62rem;border:1px solid #e5e7eb;border-radius:6px;padding:2px 4px;margin-top:2px" onchange="updateStats()"></div>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="search-input" placeholder="搜尋姓名、電話、訂單編號、備註..." oninput="renderOrders()">
+      <select id="status-filter" onchange="renderOrders()">
+        <option value="">全部狀態</option>
+        <option value="pending">待確認</option>
+        <option value="confirmed">已確認</option>
+        <option value="paid">已匯款</option>
+        <option value="done">已取貨</option>
+        <option value="cancelled">已取消</option>
+      </select>
+      <button class="btn-export" onclick="exportOrders()">📥 匯出CSV</button>
+    </div>
+    <div class="orders-list" id="orders-list"></div>
+  </div>
+  <!-- OPTIONS EDITOR -->
+  <div class="page" id="page-options">
+    <div class="editor-wrap">
+
+      <!-- ── 單支款 ── -->
+      <div class="editor-section">
+        <div class="editor-title">🌸 單支款 — 圖片 ＆ 選項編輯</div>
+        <!-- 選項 -->
+        <div id="opts-editor-single"></div>
+        <button class="btn-add-opt" onclick="addOptItem('single')">＋ 新增選項</button>
+      </div>
+
+      <!-- ── 四支組合款 ── -->
+      <div class="editor-section">
+        <div class="editor-title">💐 四支組合款 — 圖片 ＆ 選項編輯</div>
+
+        <div id="opts-editor-four"></div>
+        <button class="btn-add-opt" onclick="addOptItem('four')">＋ 新增選項</button>
+      </div>
+
+      <!-- ── 畢業氣球花圈 ── -->
+      <div class="editor-section">
+        <div class="editor-title">🎓 畢業氣球花圈 — 圖片 ＆ 選項編輯</div>
+
+        <div id="opts-editor-wreath"></div>
+        <button class="btn-add-opt" onclick="addOptItem('wreath')">＋ 新增選項</button>
+      </div>
+
+      <div class="save-strip">
+        <button class="btn-save" onclick="saveOptions()">💾 儲存所有選項與圖片（前台同步更新）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="editor-wrap">
+      <div class="editor-section">
+        <div class="editor-title">🏪 店家設定</div>
+        <div class="ef"><label>店家名稱</label><input id="s-shopname" placeholder="翻轉氣球樂學所"></div>
+        <div class="ef">
+          <label>官方 LINE 連結（客人送出訂單後直接跳轉）</label>
+          <input id="s-line" placeholder="https://lin.ee/S3aLhH0">
+          <div class="hint">直接貼上 LINE 官方連結，例：https://lin.ee/S3aLhH0<br>（line://ti/p/~帳號 可直接開啟 App）</div>
+        </div>
+        <div class="ef"><label>前台公告文字</label><textarea id="s-announce" placeholder="🎈 畢業季限定..."></textarea></div>
+        <div class="ef"><label>修改管理密碼（留空不修改）</label><input id="s-pw" type="password" placeholder="輸入新密碼"></div>
+      </div>
+      <div class="save-strip">
+        <button class="btn-save" onclick="saveSettings()">💾 儲存設定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER DRAWER -->
+<div class="drawer-overlay" id="order-drawer" onclick="closeDrawer()">
+  <div class="drawer" onclick="event.stopPropagation()">
+    <div class="dhead">
+      <div class="dtitle" id="d-name">訂單詳情</div>
+      <button class="dclose" onclick="closeDrawer()">✕</button>
+    </div>
+    <div style="padding:10px 15px 4px;font-size:.73rem;font-weight:700;color:var(--gray)">更改狀態</div>
+    <div class="status-grid" id="d-status-grid"></div>
+    <div class="dbody" id="d-body"></div>
+  </div>
+</div>
+
+<!-- ZOOM MODAL -->
+<div class="zoom-overlay" id="zoom-overlay" onclick="closeZoom()">
+  <button class="zoom-close" onclick="closeZoom()">✕</button>
+  <img id="zoom-img" src="" alt="">
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SK={ADMIN_PW:'fbs_admin_pw',PRODUCTS:'fbs_products',ORDERS:'fbs_orders',SETTINGS:'fbs_settings',OPTIONS:'fbs_options'};
+const DEFAULT_OPTIONS={
+  single:{basePrice:149,items:[
+    {id:'s1',label:'單支花',price:149,hasStyle:true,styleLabel:'選擇款式（可多選）',styles:['A款','B款','C款','D款','E款','F款','G款','H款','I款','J款','K款','L款','M款','N款','O款'],hasExtra:false,extraLabel:''},
+    {id:'s2',label:'加購一花',price:80,hasStyle:false,note:'隨機搭配',styles:[],hasExtra:false,extraLabel:''},
+    {id:'s3',label:'加購一草',price:80,hasStyle:false,note:'隨機搭配',styles:[],hasExtra:false,extraLabel:''}
+  ]},
+  four:{basePrice:520,items:[
+    {id:'f1',label:'四支組合款（三花一草）',price:520,hasStyle:true,styleLabel:'選擇款式（可多選）',styles:['A款','B款','C款','D款','E款'],hasExtra:false,extraLabel:''}
+  ]},
+  wreath:{basePrice:799,items:[
+    {id:'w1',label:'不需要寫字',price:799,hasStyle:true,styleLabel:'選擇款式（可多選）',styles:['A款','B款','C款','D款','E款'],hasExtra:false,extraLabel:''},
+    {id:'w2',label:'需要寫字',price:799,hasStyle:true,styleLabel:'選擇款式（可多選）',styles:['A款','B款','C款','D款','E款'],hasExtra:true,extraLabel:'請填寫寫字內容（例：to小晴 畢業快樂）'}
+  ]}
+};
+const STATUS_LABELS={pending:'待確認',confirmed:'已確認',paid:'已匯款',done:'已取貨',cancelled:'已取消'};
+const STATUS_COLORS={pending:'var(--yellow)',confirmed:'var(--green)',paid:'var(--blue)',done:'var(--purple)',cancelled:'var(--red)'};
+const STATUS_BGS={pending:'var(--ybg)',confirmed:'var(--gbg)',paid:'var(--bbg)',done:'var(--pbg)',cancelled:'var(--rbg)'};
+
+function ld(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
+function sv(k,v){
+  try{localStorage.setItem(k,JSON.stringify(v));}catch{}
+  try{const bc=new BroadcastChannel('fbs_sync');bc.postMessage({key:k,ts:Date.now()});bc.close();}catch{}
+}
+
+let products=ld(SK.PRODUCTS,[]);
+let orders=ld(SK.ORDERS,[]);
+let settings=ld(SK.SETTINGS,{shopName:'翻轉氣球樂學所',lineUrl:'https://lin.ee/S3aLhH0',announcement:''});
+let opts=JSON.parse(JSON.stringify(ld(SK.OPTIONS,DEFAULT_OPTIONS)));// deep clone
+let currentOrderId=null;
+let editingProdId=null;
+
+// ── Login ─────────────────────────────────────────────────
+function doLogin(){
+  const pw=document.getElementById('pw-input').value;
+  const stored=localStorage.getItem(SK.ADMIN_PW)||'admin123';
+  if(pw===stored){
+    document.getElementById('login-wrap').classList.add('gone');
+    document.getElementById('app').classList.add('show');
+    initSync();refresh();
+  }else{
+    document.getElementById('pw-input').classList.add('err');
+    document.getElementById('pw-err').textContent='密碼錯誤';
+    setTimeout(()=>{document.getElementById('pw-input').classList.remove('err');document.getElementById('pw-err').textContent='';},2000);
+  }
+}
+function doLogout(){
+  document.getElementById('login-wrap').classList.remove('gone');
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('pw-input').value='';
+}
+document.getElementById('pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+// ── Sync ──────────────────────────────────────────────────
+function initSync(){
+  // Firebase 即時監聽（跨裝置同步）
+  fbWatchOrders(function(list){
+    orders=list;
+    sv(SK.ORDERS,orders);
+    renderOrders();updateStats();
+    var el=document.getElementById('sync-status');
+    if(el){el.style.background='rgba(234,179,8,.5)';setTimeout(function(){el.style.background='rgba(22,163,74,.3)';},800);}
+  });
+  // 本機同步
+  try{var bc=new BroadcastChannel('fbs_sync');bc.onmessage=function(e){if(e.data.key===SK.PRODUCTS){products=load(SK.PRODUCTS,[]);renderProdLists();}if(e.data.key===SK.OPTIONS){opts=load(SK.OPTIONS,DEFAULT_OPTIONS);renderOptsEditor();}if(e.data.key===SK.SETTINGS){settings=load(SK.SETTINGS,{});loadSettForm();}};}catch(e){}
+}
+function pulse(){const el=document.getElementById('sync-status');el.style.background='rgba(234,179,8,.5)';setTimeout(()=>{el.style.background='rgba(22,163,74,.3)';},800);}
+function refresh(){renderOrders();updateStats();renderProdLists();renderOptsEditor();loadSettForm();}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(name==='orders'){orders=ld(SK.ORDERS,[]);renderOrders();updateStats();}
+  if(name==='options'){opts=JSON.parse(JSON.stringify(ld(SK.OPTIONS,DEFAULT_OPTIONS)));renderOptsEditor();}
+  if(name==='settings'){settings=ld(SK.SETTINGS,{});loadSettForm();}
+}
+
+// ── Stats & Orders ────────────────────────────────────────
+var revMode='day';
+function setRevMode(mode){
+  revMode=mode;
+  var dp=document.getElementById('rev-date-picker');
+  if(mode==='month'){
+    dp.type='month';
+    if(!dp.value||dp.value.length===10) dp.value=new Date().toISOString().slice(0,7);
+  } else {
+    dp.type='date';
+    if(!dp.value||dp.value.length===7) dp.value=new Date().toISOString().slice(0,10);
+  }
+  document.getElementById('rev-day-btn').style.background=(mode==='day'?'var(--rose)':'#fff');
+  document.getElementById('rev-day-btn').style.color=(mode==='day'?'#fff':'var(--rose)');
+  document.getElementById('rev-month-btn').style.background=(mode==='month'?'var(--rose)':'#fff');
+  document.getElementById('rev-month-btn').style.color=(mode==='month'?'#fff':'var(--rose)');
+  updateStats();
+}
+function updateStats(){
+  document.getElementById('s-all').textContent=orders.length;
+  document.getElementById('s-pending').textContent=orders.filter(function(o){return o.status==='pending';}).length;
+  document.getElementById('s-confirmed').textContent=orders.filter(function(o){return o.status==='confirmed';}).length;
+  var paidEl=document.getElementById('s-paid');
+  if(paidEl) paidEl.textContent=orders.filter(function(o){return o.status==='paid';}).length;
+  document.getElementById('s-done').textContent=orders.filter(function(o){return o.status==='done';}).length;
+  var dp=document.getElementById('rev-date-picker');
+  var pickVal=dp?dp.value:'';
+  if(!pickVal) pickVal=new Date().toISOString().slice(0,10);
+  var rev=0;
+  orders.filter(function(o){return o.status!=='cancelled';}).forEach(function(o){
+    if(!o.createdAt) return;
+    var d=new Date(o.createdAt);
+    var ymd=d.getFullYear()+'-'+(''+(d.getMonth()+1)).padStart(2,'0')+'-'+(''+d.getDate()).padStart(2,'0');
+    var ym=ymd.slice(0,7);
+    if(revMode==='month'){ if(ym===pickVal) rev+=(o.total||0); }
+    else { if(ymd===pickVal) rev+=(o.total||0); }
+  });
+  document.getElementById('s-revenue').textContent='$'+rev;
+}
+function renderOrders(){
+  const rawSearch=(document.getElementById('search-input')?.value||'').trim();
+  const search=rawSearch.replace(/^#/,'').toLowerCase();
+  const sf=document.getElementById('status-filter')?.value||'';
+  const filtered=orders.filter(o=>{
+    const ms=(o.name||'').toLowerCase().includes(search)||(o.phone||'').includes(search)||(o.id||'').toLowerCase().includes(search)||(o.note||'').toLowerCase().includes(search)||(o.pickupDate||'').includes(search);
+    return ms&&(!sf||o.status===sf);
+  }).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const list=document.getElementById('orders-list');
+  if(!filtered.length){list.innerHTML='<div class="empty-state"><div>📭</div><p>目前沒有訂單</p></div>';return;}
+  list.innerHTML=filtered.map(o=>`
+    <div class="order-card${o.id===currentOrderId?' sel':''}" onclick="openOrder('${o.id}')">
+      <div class="oc-top">
+        <div><span class="oc-name">${o.name||'未知'}</span><span class="oc-phone">${o.phone||''}</span></div>
+        <span class="badge" style="background:${STATUS_BGS[o.status]||'#f3f4f6'};color:${STATUS_COLORS[o.status]||'#374151'}">${STATUS_LABELS[o.status]||o.status}</span>
+      </div>
+      <div class="oc-tags">${(o.items||[]).map(i=>i.name.split('・')[0]).join('、')}</div>
+      <div class="oc-bottom">
+        <span class="oc-pickup">📅 ${o.pickupDate||''} ${o.pickupType==='lala'?'<span style="color:#d97706;font-weight:700">🛵 Lalamove</span>':'<span style="color:var(--green);font-weight:700">🏠 自取</span>'}</span>
+        <span class="oc-price">NT$ ${o.total||0}</span>
+      </div>
+      <div class="oc-id">#${o.id}</div>
+    </div>`).join('');
+}
+
+function openOrder(id){
+  currentOrderId=id;const o=orders.find(x=>x.id===id);if(!o)return;
+  renderOrders();
+  document.getElementById('d-name').textContent=(o.name||'')+'　的訂單';
+  document.getElementById('d-status-grid').innerHTML=['pending','confirmed','paid','done','cancelled'].map(s=>`
+    <button class="sbtn${o.status===s?' s-'+s:''}" onclick="setStatus('${id}','${s}')">${STATUS_LABELS[s]}</button>`).join('');
+  const itemsHtml=(o.items||[]).map(i=>`${i.name} ×${i.qty}　NT$${i.subtotal}`).join('<br>');
+  document.getElementById('d-body').innerHTML=`
+    <div class="drow"><div class="dlbl">訂單編號</div><div class="dval">#${o.id}</div></div>
+    <div class="drow"><div class="dlbl">姓名</div><div class="dval">${o.name||''}</div></div>
+    <div class="drow"><div class="dlbl">電話</div><div class="dval">${o.phone||''}</div></div>
+    <div class="drow"><div class="dlbl">取貨時間</div><div class="dval">${o.pickupDate||''}</div></div>
+    <div class="drow"><div class="dlbl">取貨方式</div><div class="dval" style="font-weight:700;color:${o.pickupType==='lala'?'#d97706':'var(--green)'}">${o.pickupType==='lala'?'🛵 Lalamove 配送':'🏠 台中西屯工作室自取'}</div></div>
+    ${o.deliveryAddr?`<div class="drow"><div class="dlbl">配送地址</div><div class="dval">${o.deliveryAddr}</div></div>`:''}
+    <div class="drow"><div class="dlbl">商品</div><div class="dval">${itemsHtml}</div></div>
+    ${o.discount>0?`<div class="drow"><div class="dlbl">九折折抵</div><div class="dval" style="color:var(--green)">-NT$ ${o.discount}</div></div>`:''}
+    <div class="drow"><div class="dlbl">合計</div><div class="dval big">NT$ ${o.total||0}</div></div>
+    ${o.note?`<div class="drow"><div class="dlbl">備註</div><div class="dval">${o.note}</div></div>`:''}
+    <div class="drow"><div class="dlbl">下單時間</div><div class="dval">${o.createdAt?new Date(o.createdAt).toLocaleString('zh-TW'):''}</div></div>
+    <button class="btn-del" onclick="deleteOrder('${o.id}')">🗑️ 刪除此訂單</button>`;
+  document.getElementById('order-drawer').classList.add('show');
+}
+function closeDrawer(){document.getElementById('order-drawer').classList.remove('show');}
+function setStatus(id,status){
+  const idx=orders.findIndex(o=>o.id===id);if(idx<0)return;
+  orders[idx].status=status;sv(SK.ORDERS,orders);
+  fbUpdateStatus(id,status);
+  openOrder(id);renderOrders();updateStats();showToast('狀態：'+STATUS_LABELS[status]);
+}
+function deleteOrder(id){
+  if(!confirm('確定要刪除此訂單？'))return;
+  orders=orders.filter(function(o){return o.id!==id;});sv(SK.ORDERS,orders);
+  fbDeleteOrder(id);
+  closeDrawer();renderOrders();updateStats();showToast('訂單已刪除');
+}
+function exportOrders(){
+  if(!orders.length){showToast('目前沒有訂單');return;}
+  const rows=[['訂單編號','姓名','電話','取貨時間','商品','折扣','總金額','備註','狀態','下單時間']];
+  orders.forEach(o=>{
+    const items=(o.items||[]).map(i=>`${i.name}x${i.qty}`).join(';');
+    rows.push([o.id||'',o.name||'',o.phone||'',o.pickupDate||'',items,o.discount||0,o.total||0,o.note||'',STATUS_LABELS[o.status]||'',o.createdAt?new Date(o.createdAt).toLocaleString('zh-TW'):'']);
+  });
+  const csv='\uFEFF'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='翻轉氣球訂單_'+new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')+'.csv';a.click();URL.revokeObjectURL(url);
+  showToast('匯出成功！');
+}
+
+// ── Images ────────────────────────────────────────────────
+function renderProdLists(){
+  ['bouquet','balloon'].forEach(cat=>{
+    const prods=products.filter(p=>p.category===cat);
+    const el=document.getElementById('prod-list-'+cat);if(!el)return;
+    el.innerHTML=prods.map(p=>renderProdItem(p)).join('');
+  });
+}
+function renderProdItem(p){
+  const thumbStyle=p.imgSize?`width:${p.imgSize}px;height:${p.imgSize}px`:'width:54px;height:54px';
+  return `<div class="prod-item${editingProdId===p.id?' active-edit':''}" onclick="toggleEditProd(${p.id})">
+    <div class="prod-thumb" style="${thumbStyle}">${p.image?`<img src="${p.image}" onclick="event.stopPropagation();openZoom('${p.image}')" style="cursor:zoom-in">`:(p.category==='bouquet'?'🌸':'🎓')}</div>
+    <div class="prod-info"><div class="pn">${p.name}</div><div class="ps">${p.description||''}</div></div>
+    <div style="display:flex;gap:5px;align-items:center">
+      <div class="toggle-sw${p.active!==false?' on':''}" onclick="event.stopPropagation();toggleActive(${p.id})"></div>
+      <button class="btn-sm danger" onclick="event.stopPropagation();deleteProd(${p.id})">刪</button>
+    </div>
+  </div>
+  ${editingProdId===p.id?renderEditProdForm(p):''}`;
+}
+function renderEditProdForm(p){
+  const sz=p.imgSize||54;
+  return `<div class="prod-edit-form" onclick="event.stopPropagation()">
+    <div class="prod-edit-title">✏️ 編輯圖片</div>
+    <div class="ef"><label>名稱</label><input id="ep-name-${p.id}" value="${p.name||''}"></div>
+    <div class="ef">
+      <label>圖片（拖拉或點擊更換）</label>
+      <div class="img-drop-zone" id="ep-zone-${p.id}" style="aspect-ratio:4/3"
+        ondragover="handleDragOver(event,'ep-zone-${p.id}')" ondragleave="handleDragLeave('ep-zone-${p.id}')" ondrop="handleDrop(event,'ep-zone-${p.id}','ep-img-${p.id}')">
+        ${p.image?`<img class="preview-img" src="${p.image}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px"><div class="img-overlay">點擊換圖</div>`:`<div class="dz-icon">📷</div><div class="dz-text">拖拉圖片到此</div><div class="dz-sub">或點擊選擇</div>`}
+        <input type="file" accept="image/*" onchange="handleFileInput(event,'ep-zone-${p.id}','ep-img-${p.id}')">
+      </div>
+      <input type="hidden" id="ep-img-${p.id}" value="${p.image||''}">
+    </div>
+    <div class="img-size-ctrl">
+      <label>縮圖大小</label>
+      <input type="range" min="40" max="120" value="${sz}" oninput="this.nextElementSibling.textContent=this.value+'px';document.getElementById('ep-size-${p.id}').value=this.value">
+      <span>${sz}px</span>
+      <input type="hidden" id="ep-size-${p.id}" value="${sz}">
+    </div>
+    <button class="btn-save" style="margin-top:10px" onclick="saveProdEdit(${p.id})">💾 儲存</button>
+  </div>`;
+}
+function toggleEditProd(id){editingProdId=editingProdId===id?null:id;renderProdLists();}
+function toggleActive(id){const p=products.find(x=>x.id===id);if(p){p.active=p.active===false?true:false;sv(SK.PRODUCTS,products);renderProdLists();showToast(p.name+(p.active?' 已啟用':' 已停用'));}}
+function saveProdEdit(id){
+  const p=products.find(x=>x.id===id);if(!p)return;
+  p.name=document.getElementById('ep-name-'+id)?.value||p.name;
+  const img=document.getElementById('ep-img-'+id)?.value;if(img)p.image=img;
+  p.imgSize=parseInt(document.getElementById('ep-size-'+id)?.value)||54;
+  sv(SK.PRODUCTS,products);editingProdId=null;renderProdLists();showToast('已儲存！');
+}
+function deleteProd(id){
+  if(!confirm('確定刪除？'))return;
+  products=products.filter(p=>p.id!==id);sv(SK.PRODUCTS,products);renderProdLists();showToast('已刪除');
+}
+function addProd(cat){
+  const pre=cat==='bouquet'?'b':'r';
+  const name=document.getElementById('new-'+pre+'-name').value.trim();
+  if(!name){showToast('請輸入名稱');return;}
+  const newP={id:Date.now(),category:cat,name,description:'',image:document.getElementById('new-'+pre+'-img').value||'',imgSize:54,active:true};
+  products.push(newP);sv(SK.PRODUCTS,products);
+  document.getElementById('new-'+pre+'-name').value='';
+  document.getElementById('new-'+pre+'-img').value='';
+  const zone=document.getElementById('new-'+pre+'-zone');
+  zone.innerHTML=`<div class="dz-icon">📷</div><div class="dz-text">拖拉圖片到此</div><div class="dz-sub">或點擊選擇</div><input type="file" accept="image/*" onchange="handleFileInput(event,'new-${pre}-zone','new-${pre}-img')">`;
+  renderProdLists();showToast('已新增！');
+}
+
+// ── Image drop ────────────────────────────────────────────
+function handleDragOver(e,zid){e.preventDefault();document.getElementById(zid).classList.add('drag-over');}
+function handleDragLeave(zid){document.getElementById(zid).classList.remove('drag-over');}
+function handleDrop(e,zid,bid){e.preventDefault();handleDragLeave(zid);const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))readImg(f,zid,bid);}
+function handleFileInput(e,zid,bid){const f=e.target.files[0];if(f)readImg(f,zid,bid);}
+function readImg(file,zid,bid){
+  const r=new FileReader();
+  r.onload=ev=>{
+    const b64=ev.target.result;
+    const hidEl=document.getElementById(bid);if(hidEl)hidEl.value=b64;
+    const zone=document.getElementById(zid);if(!zone)return;
+    let img=zone.querySelector('.preview-img');
+    if(!img){img=document.createElement('img');img.className='preview-img';img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;border-radius:10px;background:#f5f0eb';zone.insertBefore(img,zone.querySelector('input[type=file]'));}
+    img.src=b64;
+    let ov=zone.querySelector('.img-overlay');
+    if(!ov){ov=document.createElement('div');ov.className='img-overlay';ov.textContent='點擊換圖';zone.appendChild(ov);}
+    ['dz-icon','dz-text','dz-sub'].forEach(c=>{const el=zone.querySelector('.'+c);if(el)el.style.display='none';});
+  };
+  r.readAsDataURL(file);
+}
+
+// ── Zoom ──────────────────────────────────────────────────
+function openZoom(src){document.getElementById('zoom-img').src=src;document.getElementById('zoom-overlay').classList.add('show');}
+function closeZoom(){document.getElementById('zoom-overlay').classList.remove('show');}
+
+// ── OPTIONS EDITOR ────────────────────────────────────────
+function renderOptsEditor(){
+  ['single','four','wreath'].forEach(renderOptTypeEditor);
+}
+
+function renderOptTypeEditor(type){
+  const el=document.getElementById('opts-editor-'+type);if(!el)return;
+  const cfg=opts[type]||{items:[]};
+  el.innerHTML=cfg.items.map((it,idx)=>renderOptItemRow(type,it,idx)).join('');
+}
+
+function renderOptItemRow(type,it,idx){
+  const stylesHtml=(it.styles||[]).map(st=>`
+    <div class="style-pill-edit">
+      <span>${st}</span>
+      <button class="style-pill-del" onclick="removeStyle('${type}',${idx},'${st}')" title="刪除">×</button>
+    </div>`).join('');
+  const stylesEditor=`<div class="styles-editor">
+    <label>款式選項</label>
+    <div class="styles-pills-wrap" id="styles-pills-${type}-${idx}">${stylesHtml}</div>
+    <div class="add-style-row">
+      <input class="add-style-input" id="new-style-${type}-${idx}" placeholder="例：A款" onkeydown="if(event.key==='Enter'){event.preventDefault();addStyle('${type}',${idx})}">
+      <button class="add-style-btn" onclick="addStyle('${type}',${idx})">＋ 新增</button>
+    </div>
+  </div>`;
+
+  return `<div class="opt-item-row" id="opt-row-${type}-${idx}">
+    <div class="oir-head">
+      <span class="oir-label">選項 ${idx+1}</span>
+      <button class="oir-del" onclick="removeOptItem('${type}',${idx})">刪除此選項</button>
+    </div>
+    <div class="opt-field"><label>選項名稱</label>
+      <input value="${it.label||''}" oninput="opts['${type}'].items[${idx}].label=this.value">
+    </div>
+    <div class="opt-row2">
+      <div class="opt-field"><label>價格（NT$）</label>
+        <input type="number" value="${it.price||0}" oninput="opts['${type}'].items[${idx}].price=parseInt(this.value)||0">
+      </div>
+      <div class="opt-field"><label>備註文字（選填）</label>
+        <input value="${it.note||''}" placeholder="例：隨機搭配" oninput="opts['${type}'].items[${idx}].note=this.value">
+      </div>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="hs-${type}-${idx}" ${it.hasStyle?'checked':''} onchange="opts['${type}'].items[${idx}].hasStyle=this.checked;renderOptTypeEditor('${type}')">
+      <label for="hs-${type}-${idx}">顯示款式選擇（讓客人選A款B款等）</label>
+    </div>
+    ${it.hasStyle?`<div class="opt-field" style="margin-top:8px"><label>款式選擇標題文字</label>
+      <input value="${it.styleLabel||'選擇款式（可多選）'}" oninput="opts['${type}'].items[${idx}].styleLabel=this.value">
+    </div>${stylesEditor}`:''}
+    <div class="checkbox-row" style="margin-top:6px">
+      <input type="checkbox" id="he-${type}-${idx}" ${it.hasExtra?'checked':''} onchange="opts['${type}'].items[${idx}].hasExtra=this.checked;renderOptTypeEditor('${type}')">
+      <label for="he-${type}-${idx}">有額外填寫欄位（如寫字內容）</label>
+    </div>
+    ${it.hasExtra?`<div class="opt-field" style="margin-top:8px"><label>填寫欄位提示文字</label>
+      <input value="${it.extraLabel||''}" placeholder="例：請填寫寫字內容" oninput="opts['${type}'].items[${idx}].extraLabel=this.value">
+    </div>`:''}
+  </div>`;
+}
+
+function addOptItem(type){
+  if(!opts[type])opts[type]={basePrice:0,items:[]};
+  opts[type].items.push({id:type+'_'+Date.now(),label:'新選項',price:0,hasStyle:false,note:'',styles:[],hasExtra:false,extraLabel:''});
+  renderOptTypeEditor(type);
+}
+function removeOptItem(type,idx){
+  if(!confirm('確定刪除此選項？'))return;
+  opts[type].items.splice(idx,1);renderOptTypeEditor(type);
+}
+function addStyle(type,idx){
+  const inp=document.getElementById('new-style-'+type+'-'+idx);
+  const val=(inp?.value||'').trim();if(!val){showToast('請輸入款式名稱');return;}
+  if(!opts[type].items[idx].styles)opts[type].items[idx].styles=[];
+  opts[type].items[idx].styles.push(val);
+  inp.value='';renderOptTypeEditor(type);
+}
+function removeStyle(type,idx,st){
+  const arr=opts[type].items[idx].styles;
+  const i=arr.indexOf(st);if(i>=0)arr.splice(i,1);
+  renderOptTypeEditor(type);
+}
+function saveOptions(){
+  sv(SK.OPTIONS,opts);
+  fbSaveOptions(opts);
+  showToast('選項已儲存！前台同步更新 🎉');
+}
+
+function saveSettings(){
+  settings.shopName=document.getElementById('s-shopname').value;
+  settings.lineUrl=document.getElementById('s-line').value;
+  settings.announcement=document.getElementById('s-announce').value;
+  const npw=document.getElementById('s-pw').value;
+  if(npw){localStorage.setItem(SK.ADMIN_PW,npw);document.getElementById('s-pw').value='';}
+  sv(SK.SETTINGS,settings);showToast('設定已儲存！');
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+</script>
+</body>
+</html>
